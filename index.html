@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="mg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>HevitraIA</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #0b1d28; color: #ffffff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0b1d28; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; }
+        .login-card { background-color: #162a38; padding: 30px 20px; border-radius: 20px; width: 100%; max-width: 380px; box-shadow: 0 15px 35px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; gap: 18px; }
+        .login-logo { width: 70px; height: 70px; fill: #ffffff; background-color: #800020; padding: 15px; border-radius: 50%; box-shadow: 0 5px 15px rgba(128, 0, 32, 0.5); }
+        .login-title { font-size: 22px; font-weight: bold; color: #ffffff; }
+        .login-input { width: 100%; background-color: #0b1d28; border: 1px solid #243b4d; border-radius: 12px; padding: 14px 16px; color: white; font-size: 15px; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+        .login-btn { width: 100%; background-color: #800020; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(128, 0, 32, 0.4); }
+        .login-skip { background: none; border: none; color: #888888; font-size: 14px; cursor: pointer; }
+        
+        #app-container { display: none; height: 100%; flex-direction: column; }
+        header { background-color: #800020; color: #ffffff; padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: 10px; padding-left: 15px; padding-right: 15px; display: flex; flex-direction: column; align-items: center; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 10; }
+        .btn-menu { position: absolute; left: 15px; top: max(12px, env(safe-area-inset-top)); background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+        .brand-container { display: flex; align-items: center; gap: 2px; }
+        .brain-icon-svg { width: 35px; height: 35px; fill: #ffffff; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .brand-title { font-size: 20px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .motivation-text { font-size: 12px; font-style: italic; color: #e0e0e0; margin-top: 3px; text-align: center; opacity: 0.9; }
+        
+        main { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .message { max-width: 85%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.6; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .message.ia { background-color: #162a38; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .message.user { background-color: #800020; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        
+        .message img { border-radius: 8px; margin-top: 8px; display: block; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
+        .message.user img { max-width: 150px; max-height: 150px; object-fit: cover; }
+        .message.ia img { max-width: 100%; max-height: 300px; object-fit: contain; }
+
+        .image-wrapper { position: relative; display: inline-block; max-width: 100%; margin-top: 8px;}
+        .action-buttons { display: flex; gap: 12px; margin-top: 8px; justify-content: flex-end; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .action-btn { background: none; border: none; color: #aaaaaa; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 12px; transition: 0.2s; }
+        .action-btn:hover { color: #ffffff; }
+        .action-btn svg { width: 14px; height: 14px; fill: currentColor; }
+        
+        .typing-indicator { display: none; align-self: flex-start; background-color: #162a38; padding: 12px 16px; border-radius: 16px; border-bottom-left-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .typing-indicator span { height: 8px; width: 8px; float: left; margin: 0 2px; background-color: #ffffff; display: block; border-radius: 50%; opacity: 0.4; animation: typing 1s infinite; }
+        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0% { opacity: 0.4; transform: scale(1); } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0.4; transform: scale(1); } }
+        
+        .drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; z-index: 99; }
+        .drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background-color: #0d1b2a; z-index: 100; transition: left 0.3s ease; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; overflow-y: auto; box-shadow: 5px 0 25px rgba(0,0,0,0.7); }
+        .drawer.open { left: 0; }
+        .drawer-top-content { display: flex; flex-direction: column; gap: 15px; }
+        .drawer-menu-title { font-size: 18px; font-weight: bold; color: #ffffff; margin-top: 10px; }
+        .user-profile-badge { background-color: #162a38; border: 1px solid #243b4d; padding: 12px; border-radius: 12px; display: flex; flex-direction: column; gap: 4px; margin-top: 10px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+        .user-profile-label { font-size: 11px; color: #888888; text-transform: uppercase; }
+        .user-profile-email { font-size: 13px; color: #ffb703; font-weight: bold; }
+        .menu-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; font-size: 15px; color: #ffffff; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .menu-item:hover { background-color: #1b263b; transform: translateY(-2px); }
+        .menu-icon { width: 18px; height: 18px; fill: #ffffff; }
+        .lang-select-container { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+        .lang-label { font-size: 12px; color: #aaaaaa; }
+        .lang-select { background-color: #162a38; color: white; border: 1px solid #243b4d; padding: 8px; border-radius: 8px; font-size: 14px; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+        .drawer-footer { font-size: 13px; color: #888888; text-align: center; padding-bottom: 10px; }
+        
+        #history-list .menu-item { display: flex; justify-content: space-between; align-items: center; padding-right: 5px; }
+        #history-list .menu-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+        .delete-chat-btn { background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 18px; padding: 0 8px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .delete-chat-btn:hover { color: #ff0000; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); z-index: 101; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background-color: #162a38; padding: 22px; border-radius: 16px; max-width: 380px; width: 100%; box-shadow: 0 15px 35px rgba(0,0,0,0.8); }
+        .modal-header { font-size: 18px; font-weight: bold; margin-bottom: 12px; color: #ffffff; }
+        .modal-body { font-size: 13px; line-height: 1.6; color: #d0d0d0; margin-bottom: 18px; }
+        .modal-btn { background-color: #800020; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; float: right; font-weight: bold; box-shadow: 0 4px 10px rgba(128, 0, 32, 0.4); }
+        
+        .input-container { padding: 12px 15px; background-color: #0b1d28; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); position: relative; z-index: 20; transition: transform 0.1s ease-out; }
+        
+        .input-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 5px; }
+        .model-container { position: relative; }
+        .model-badge { display: inline-flex; align-items: center; gap: 5px; background: #162a38; border: 1px solid #2ec4b6; color: #2ec4b6; padding: 5px 12px; border-radius: 15px; font-size: 12px; cursor: pointer; }
+        .model-dropdown { display: none; position: absolute; bottom: 130%; left: 0; background: #162a38; border: 1px solid #243b4d; border-radius: 8px; padding: 5px; min-width: 130px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 10; }
+        .model-option { padding: 8px 12px; font-size: 13px; cursor: pointer; border-radius: 5px; }
+        .model-option:hover { background: #1b263b; }
+        .search-btn { background: #162a38; border: 1px solid #243b4d; color: #aaa; padding: 5px 12px; border-radius: 15px; font-size: 12px; display: flex; align-items: center; gap: 5px; cursor: pointer; transition: 0.3s; }
+        .search-btn.active { background: #007bff; color: white; border-color: #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.5); }
+        .diamond-pill { display: inline-flex; align-items: center; gap: 5px; background: #162a38; border: 1px solid #ffb703; color: #ffb703; padding: 5px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        .diamond-gif { width: 14px; height: 14px; }
+        
+        .input-main-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+        .input-box { flex: 1; background-color: #162a38; border: 1px solid #243b4d; border-radius: 20px; padding: 12px 16px; color: white; font-size: 15px; outline: none; resize: none; min-height: 45px; max-height: 120px; line-height: 1.5; overflow-y: auto; box-shadow: inset 0 3px 6px rgba(0,0,0,0.4); transition: height 0.2s ease; }
+        .btn-action-icon { background: none; border: none; color: #ffffff; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; }
+        .action-svg { width: 22px; height: 22px; fill: #ffffff; }
+        .btn-send { background-color: #800020; border: none; width: 45px; height: 45px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 10px rgba(128, 0, 32, 0.4); }
+        .send-svg { width: 22px; height: 22px; fill: #ffffff; }
+        
+        .chat-footer-disclaimer { background-color: #0b1d28; border: 1px solid #134e32; color: #2ec4b6; font-size: 11px; text-align: center; padding: 6px 12px; border-radius: 10px; margin: 0 12px max(8px, env(safe-area-inset-bottom)) 12px; position: relative; z-index: 20; transition: transform 0.1s ease-out; }
+        
+        .preview-container { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 5px; width: 100%; }
+        .preview-img { width: 40px; height: 40px; object-fit: cover; border-radius: 5px; }
+        .bot-reply-text { display: block; }
+        .bot-reply-text b, .bot-reply-text strong { color: #ff4d4d; font-weight: bold; font-size: 15px; display: inline-block; margin-top: 8px; margin-bottom: 2px; }
+        .bot-reply-text ul { margin-left: 15px; margin-top: 5px; margin-bottom: 5px; }
+        .bot-reply-text li { margin-bottom: 4px; }
+        .bot-reply-text code { background: #0b1d28; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #2ec4b6; }
+        .bot-reply-text br { margin-bottom: 5px; }
+
+        #update-modal .modal-content { border: 2px solid #ff4d4d; text-align: center; }
+        #update-modal .modal-header { color: #ff4d4d; }
+        #update-modal .modal-btn { background-color: #ff4d4d; width: 100%; float: none; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <input type="file" id="file-picker" style="display:none;" accept="image/*, .pdf, .doc, .docx" multiple onchange="handleFileSelect(event)">
+
+    <div id="login-screen">
+        <div class="login-card">
+            <img src="https://i.imgur.com/ItGBXOX.jpeg" class="brain-icon-svg" style="border-radius: 50%; object-fit: cover; width: 45px; height: 45px;">
+            <div class="login-title">HevitraIA</div>
+            <input type="email" id="user-email" class="login-input" placeholder="Soraty ny Email-nao...">
+            <button class="login-btn" onclick="handleLogin()" id="login-btn-txt">Hiditra</button>
+            <button class="login-skip" onclick="skipLogin()" id="login-skip-txt">Tsy ampidirina (Vahiny)</button>
+        </div>
+    </div>
+
+    <div id="app-container">
+        <div class="drawer-overlay" id="overlay" onclick="toggleMenu()"></div>
+        
+        <div class="drawer" id="drawer">
+            <div class="drawer-top-content">
+                <div class="drawer-menu-title" id="drawer-title">Fikirakirana sy Safidy</div>
+                <div class="user-profile-badge">
+                    <span class="user-profile-label" id="profile-label">Mpampiasa mavitrika</span>
+                    <span id="user-label" class="user-profile-email">Vahiny</span>
+                </div>
+                
+                <div class="lang-select-container">
+                    <label class="lang-label" id="lang-label-text">Fiteny</label>
+                    <select id="lang-select" class="lang-select" onchange="changeLanguage()">
+                        <option value="mg">Malagasy</option>
+                        <option value="fr">Français</option>
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                    </select>
+                </div>
+
+                <ul class="menu-list">
+                    <li class="menu-item" onclick="newChat()">
+                        <svg class="menu-icon" viewBox="0 0 24 24"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg> <span id="menu-new-chat">Resaka vaovao</span>
+                    </li>
+                    <li class="menu-item" onclick="showAbout()">
+                        <svg class="menu-icon" viewBox="0 0 24 24"><path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg> <span id="menu-about">Momba ny Rindrambaiko</span>
+                    </li>
+                </ul>
+                <div id="history-list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 5px;"></div>
+            </div>
+            <div class="drawer-footer" id="footer-text">M©2026</div>
+        </div>
+
+        <header>
+            <button class="btn-menu" onclick="toggleMenu()">☰</button>
+            <div class="brand-container">
+            <img alt="HevitraIA" style="width:44px;height:44px;min-width:44px;min-height:44px;object-fit:contain;display:block;flex-shrink:0;" src="data:image/png;base64,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">
+           <span class="brand-title">HevitraIA</span>
+            </div>
+            <div class="motivation-text" id="motivation-display">"Tsy mila ho tonga lafatra ianao, ampy ny manomboka."</div>
+        </header>
+        
+        <main id="chat-box">
+            <div class="message ia" id="welcome-msg">Salama! Inona no azoko hanampiana anao androany?</div>
+            <div class="typing-indicator" id="typing-indicator"><span></span><span></span><span></span></div>
+        </main>
+
+        <div class="input-container" id="input-container">
+            <div class="input-top-row">
+                <div class="model-container">
+                    <div class="model-badge" onclick="toggleModelMenu()" id="model-badge">Modely I3 <span style="font-size:10px;">▼</span></div>
+                    <div class="model-dropdown" id="model-dropdown">
+                        <div class="model-option" onclick="selectModel('I3')">Modely I3</div>
+                        <div class="model-option" onclick="selectModel('I5')">Modely I5</div>
+                    </div>
+                </div>
+                <button class="search-btn" id="search-btn" onclick="toggleSearchMode()">
+                    🌐 <span id="search-btn-text">Fikarohana</span>
+                </button>
+                <div class="diamond-pill" id="diamond-container">
+                    <img src="https://i.gifer.com/origin/2d/2d8d6b1b4e2f3a4d5c6b7a8f9e0d1c2b.gif" alt="diamond" class="diamond-gif" onerror="this.style.display='none'">
+                    💎 <span id="diamond-count">25</span> / 25 <span id="diamond-text">Diamond</span>
+                </div>
+            </div>
+
+            <div id="preview-container" class="preview-container"></div>
+
+            <div class="input-main-row">
+                <button class="btn-action-icon" title="Hampiditra rakitra" onclick="openFilePicker()">
+                    <svg class="action-svg" viewBox="0 0 24 24"><path d="M16.5,6V17.5A4,4 0 0,1 12.5,21.5A4,4 0 0,1 8.5,17.5V5A2.5,2.5 0 0,1 11,2.5A2.5,2.5 0 0,1 13.5,5V15.5A1,1 0 0,1 12.5,16.5A1,1 0 0,1 11.5,15.5V6H10V15.5A2.5,2.5 0 0,0 12.5,18A2.5,2.5 0 0,0 15,15.5V5A4,4 0 0,0 11,1A4,4 0 0,0 7,5V17.5A5.5,5.5 0 0,0 12.5,23A5.5,5.5 0 0,0 18,17.5V6H16.5Z"/></svg>
+                </button>
+                
+                <button class="btn-action-icon" id="mic-btn" title="Mitenena" onclick="toggleVoiceInput()">
+                    <svg class="action-svg" viewBox="0 0 24 24"><path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/></svg>
+                </button>
+
+                <textarea id="msg-input" class="input-box" placeholder="Soraty eto ny fanontaniana..." onkeypress="handleKeyPress(event)" oninput="autoResize(this)"></textarea>
+                
+                <button class="btn-send" onclick="sendMessage()" title="Mandefa">
+                    <svg class="send-svg" viewBox="0 0 24 24"><path d="M2.01,21L23,12L2.01,3L2,10L17,12L2,14L2.01,21Z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="chat-footer-disclaimer" id="disclaimer-text">Fanamarihana: HevitraIA dia IA ary mety hanao fahadisoana</div>
+    </div>
+
+    <div class="modal" id="aboutModal">
+        <div class="modal-content">
+            <div class="modal-header" id="about-title">Inona moa ny HevitraIA?</div>
+            <div class="modal-body">
+                <p id="about-text-1"></p>
+                <br>
+                <p><i id="about-text-2"></i></p>
+            </div>
+            <button class="modal-btn" onclick="hideAbout()" id="about-btn">Lasa anie</button>
+        </div>
+    </div>
+
+    <div class="modal" id="update-modal">
+        <div class="modal-content">
+            <div class="modal-header" id="update-title">Mila mise à jour ianao</div>
+            <div class="modal-body" id="update-text">
+                Miarahaba tompoko, Mila manao mise à jour ianao vao mitohy fampiasanao ny HevitraIA. Midira ao amin'ny pejy Facebook HevitraIA hahazoana ny vaovao farany.
+            </div>
+            <button class="modal-btn" onclick="closeUpdateModal()">Hikatona</button>
+        </div>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            doc,
+            setDoc,
+            getDocs,
+            query,
+            where,
+            limit,
+            serverTimestamp,
+            increment
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyABey7m56SG76Eii8G-2V4WYoSEDT5YYwI",
+            authDomain: "hevitraia-2.firebaseapp.com",
+            projectId: "hevitraia-2",
+            storageBucket: "hevitraia-2.firebasestorage.app",
+            messagingSenderId: "141817662112",
+            appId: "1:141817662112:web:3d0b0475c27c23709617c5",
+            measurementId: "G-P0R3GHFBYM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.hevitraDb = db;
+        window.firestoreOps = {
+            collection,
+            addDoc,
+            doc,
+            setDoc,
+            getDocs,
+            query,
+            where,
+            limit,
+            serverTimestamp,
+            increment
+        };
+     </script>
+
+    <script>
+        const WORKER_URL = "https://hevitra-gate.iandrymanampisoa138.workers.dev"; 
+        const FREE_PERIOD_END_DATE = new Date('2027-02-25T00:00:00');
+
+        let isSearchMode = false;
+        let currentChatId = null;
+        let currentLang = 'mg';
+        let recognition = null;
+        let isRecording = false;
+        let selectedFiles = [];
+
+        const translations = {
+            mg: { 
+                motivation: [
+                    "Tsy mila ho tonga lafatra ianao, ampy ny manomboka.",
+                    "Ny tanjona lehibe dia miorina amin'ny dingana kely atao isan'andro.",
+                    "Aza avela ny tahotra hanakana ny nofinao hitombo.",
+                    "Ny fahaiza-manao dia vokatry ny fampiharana tsy miato.",
+                    "Ny sarotra androany dia traikefa sarobidy ho an'ny ampitso.",
+                    "Matokia ny fahaizanao, manana talenta lehibe ianao.",
+                    "Izay mamboly finiavana no mijinja fahombiazana.",
+                    "Aza mijery ny lavitra loatra, mba jereo ihany koa ny dingana efa vitanao.",
+                    "Ny hery lehibe indrindra dia ny finoana fa mahavita ianao.",
+                    "Ny hafa mandry, ianao mifoha. Izay no mampiavaka anao."
+                ], 
+                menuTitle: "Fikirakirana sy Safidy", profileLabel: "Mpampiasa mavitrika", langLabel: "Fiteny", 
+                newChat: "Resaka vaovao", history: "Ny resaka rehetra", about: "Momba ny Rindrambaiko", 
+                welcome: "Salama! Inona no azoko hanampiana anao androany?", inputPlaceholder: "Soraty eto ny fanontaniana...", 
+                disclaimer: "Fanamarihana: HevitraIA dia IA ary mety hanao fahadisoana", 
+                aboutTitle: "Inona moa ny HevitraIA?", aboutBtn: "Lasa anie", 
+                aboutText1: "Teraka tamin'ny finiavana tsy hanaiky ho resy ary mino fa ny tanora Malagasy dia manana ny talenta rehetra hahafahany mijoro tsara eo amin'ny tontolon'ny teknolojia maneran-tany. Tsy misy mahasamihafa antsika amin'ny hafa, ary izany no antony namoronana ity rindrambaiko ity.",
+                aboutText2: "\"Ny HevitraIA dia natsangana mba ho namana mpanampy sy mpanolo-tsaina amin'ny fiainana andavanandro.\"",
+                loginBtn: "Hiditra", skipBtn: "Tsy ampidirina (Vahiny)", emailPlaceholder: "Soraty ny Email-nao...",
+                diamond: "Diamond", outOfDiamonds: "Efa lany ny Diamond anao androany. Miverena rahampitso!",
+                micError: "Tsy afaka nihaino ny feo. Hamarino ny mikrô.",
+                updateTitle: "Mila mise à jour ianao",
+                updateText: "Miarahaba tompoko, Mila manao mise à jour ianao vao mitohy fampiasanao ny HevitraIA. Midira ao amin'ny pejy Facebook HevitraIA hahazoana ny vaovao farany.",
+                searchBtn: "Fikarohana",
+                i5Alert: "Mbola eo am-panavaozana ny HevitraIA.",
+                searchOnMsg: "Tongasoa eto amin'ny Fikarohana HevitraIA! Vonona hamakafaka ny vaovao farany eto amin'ny Internet aho. Inona no vaovao tianao ho fantatra, na inona no ilainao hokarohana?",
+                searchOffMsg: "Tafaverina eto amin'ny resaka mivantana ianao! Inona no hanampiko anao manaraka?"
+            },
+            fr: { 
+                motivation: [
+                    "N'attends pas le moment parfait, rends le moment parfait.",
+                    "Les grands objectifs reposent sur de petites étapes quotidiennes.",
+                    "Ne laisse pas la peur empêcher tes rêves de grandir.",
+                    "La compétence est le fruit d'une pratique constante.",
+                    "Les difficultés d'aujourd'hui sont de précieuses leçons pour demain.",
+                    "Crois en tes capacités, tu as un grand talent.",
+                    "Celui qui cultive la persévérance récolte le succès.",
+                    "Ne regarde pas trop loin, regarde aussi le chemin déjà parcouru.",
+                    "La plus grande force est la croyance en sa propre capacité.",
+                    "Les autres dorment, tu te réveilles. C'est ce qui te distingue."
+                ], 
+                menuTitle: "Paramètres et Options", profileLabel: "UTILISATEUR ACTIF", langLabel: "Langue", 
+                newChat: "Nouvelle discussion", history: "Toutes les discussions", about: "À propos du logiciel", 
+                welcome: "Bonjour ! Comment puis-je vous aider aujourd'hui ?", inputPlaceholder: "Écrivez votre question ici...", 
+                disclaimer: "Avertissement : HevitraIA est une IA et peut commettre des erreurs", 
+                aboutTitle: "Qu'est-ce que HevitraIA ?", aboutBtn: "Fermer", 
+                aboutText1: "Né de la volonté de ne pas abandonner et croyant que les jeunes Malgaches ont tout le talent nécessaire pour se démarquer sur la scène technologique mondiale. Nous ne sommes pas différents des autres, et c'est pourquoi cette application a été créée.",
+                aboutText2: "\"HevitraIA a été fondée pour être un ami, un assistant et un conseiller dans la vie quotidienne.\"",
+                loginBtn: "Se connecter", skipBtn: "Continuer sans compte", emailPlaceholder: "Entrez votre email...",
+                diamond: "Diamants", outOfDiamonds: "Vous avez épuisé vos Diamants aujourd'hui. Revenez demain !",
+                micError: "Impossible d'écouter. Vérifiez votre micro.",
+                updateTitle: "Mise à jour requise",
+                updateText: "Bonjour, Veuillez mettre à jour l'application pour continuer à utiliser HevitraIA. Rendez-vous sur la page Facebook HevitraIA pour la dernière version.",
+                searchBtn: "Recherche",
+                i5Alert: "HevitraIA est en cours de mise à jour.",
+                searchOnMsg: "Bienvenue dans la recherche HevitraIA ! Je suis prêt à analyser les dernières nouvelles sur Internet. Quelles nouvelles voulez-vous savoir, ou que voulez-vous rechercher ?",
+                searchOffMsg: "Vous êtes de retour en mode conversation ! Comment puis-je vous aider ensuite ?"
+            },
+            en: { 
+                motivation: [
+                    "Don't wait for the perfect moment; make the moment perfect.",
+                    "Great goals are built on small daily steps.",
+                    "Don't let fear stop your dreams from growing.",
+                    "Skill is the result of constant practice.",
+                    "Today's difficulties are valuable lessons for tomorrow.",
+                    "Believe in your abilities, you have great talent.",
+                    "Those who cultivate perseverance reap success.",
+                    "Don't look too far ahead, also look at the steps you've already taken.",
+                    "The greatest strength is believing that you can do it.",
+                    "Others sleep, you wake up. That's what makes you different."
+                ], 
+                menuTitle: "Settings & Options", profileLabel: "ACTIVE USER", langLabel: "Language", 
+                newChat: "New Chat", history: "Chat History", about: "About Software", 
+                welcome: "Hello! How can I help you today?", inputPlaceholder: "Type your question here...", 
+                disclaimer: "Disclaimer: HevitraIA is an AI and may make mistakes", 
+                aboutTitle: "What is HevitraIA?", aboutBtn: "Close", 
+                aboutText1: "Born from the will not to give up and believing that young Malagasy people have all the talent needed to stand out on the global tech scene. We are no different from others, and that is why this application was created.",
+                aboutText2: "\"HevitraIA was founded to be a friend, an assistant, and an advisor in everyday life.\"",
+                loginBtn: "Log In", skipBtn: "Continue as Guest", emailPlaceholder: "Enter your email...",
+                diamond: "Diamonds", outOfDiamonds: "You have run out of Diamonds today. Come back tomorrow!",
+                micError: "Unable to listen. Check your microphone.",
+                updateTitle: "Update Required",
+                updateText: "Hello, Please update the app to continue using HevitraIA. Visit the HevitraIA Facebook page for the latest version.",
+                searchBtn: "Search",
+                i5Alert: "HevitraIA is currently updating.",
+                searchOnMsg: "Welcome to HevitraIA Search! I am ready to analyze the latest news on the Internet. What news do you want to know, or what do you want to search for?",
+                searchOffMsg: "You are back in chat mode! How can I help you next?"
+            },
+            es: { 
+                motivation: [
+                    "No esperes el momento perfecto, haz que el momento sea perfecto.",
+                    "Las grandes metas se construyen con pequeños pasos diarios.",
+                    "No dejes que el miedo impida que tus sueños crezcan.",
+                    "La habilidad es el resultado de la práctica constante.",
+                    "Las dificultades de hoy son valiosas lecciones para mañana.",
+                    "Cree en tus habilidades, tienes un gran talento.",
+                    "Quien cultiva la perseverancia cosecha el éxito.",
+                    "No mires demasiado lejos, mira también los pasos que ya has dado.",
+                    "La mayor fuerza es creer que puedes hacerlo.",
+                    "Los demás duermen, tú despiertas. Eso te hace diferente."
+                ], 
+                menuTitle: "Ajustes y Opciones", profileLabel: "USUARIO ACTIVO", langLabel: "Idioma", 
+                newChat: "Nueva conversación", history: "Historial de chats", about: "Acerca del software", 
+                welcome: "¡Hola! ¿Cómo puedo ayudarte hoy?", inputPlaceholder: "Escribe tu pregunta aquí...", 
+                disclaimer: "Aviso: HevitraIA est une IA et peut commettre des erreurs", 
+                aboutTitle: "¿Qué est HevitraIA?", aboutBtn: "Cerrar", 
+                aboutText1: "Nacido de la voluntad de no rendirse et creyendo que los jóvenes malgaches tienen todo el talento necesario para destacar en la escena tecnológica mundial. No somos diferentes a los demás, et por eso se creó esta aplicación.",
+                aboutText2: "\"HevitraIA fue fundada para ser un amigo, un asistente y un consejero en la vida cotidiana.\"",
+                loginBtn: "Iniciar Sesión", skipBtn: "Continuar como Invitado", emailPlaceholder: "Ingresa tu correo...",
+                diamond: "Diamantes", outOfDiamonds: "Te has quedado sin Diamantes hoy. ¡Vuelve mañana!",
+                micError: "No se puede escuchar. Revisa tu micrófono.",
+                updateTitle: "Actualización requerida",
+                updateText: "Hola, Actualice la aplicación para continuar usando HevitraIA. Visite la página de Facebook de HevitraIA para obtener la última versión.",
+                searchBtn: "Búsqueda",
+                i5Alert: "HevitraIA se está actualizando.",
+                searchOnMsg: "¡Bienvenido a la búsqueda de HevitraIA! Estoy listo para analizar las últimas noticias en Internet. ¿Qué noticias quieres saber o qué quieres buscar?",
+                searchOffMsg: "¡Has vuelto al modo de conversación! ¿Cómo puedo ayudarte a continuación?"
+            }
+        };
+
+        function toggleSearchMode() {
+            isSearchMode = !isSearchMode;
+            const btn = document.getElementById('search-btn');
+            const t = translations[currentLang];
+            if (isSearchMode) {
+                btn.classList.add('active');
+                appendIAMessage(t.searchOnMsg, false);
+            } else {
+                btn.classList.remove('active');
+                appendIAMessage(t.searchOffMsg, false);
+            }
+        }
+
+        function toggleModelMenu() {
+            const dropdown = document.getElementById('model-dropdown');
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function selectModel(model) {
+            const t = translations[currentLang];
+            if (model === 'I5') {
+                alert(t.i5Alert);
+            } else {
+                document.getElementById('model-badge').innerHTML = `Modely ${model} <span style="font-size:10px;">▼</span>`;
+                document.getElementById('model-dropdown').style.display = 'none';
+            }
+        }
+
+        window.onload = function() {
+            changeLanguage();
+            loadHistory();
+            initSpeechRecognition();
+            updateDiamondDisplay();
+            autoResize(document.getElementById('msg-input'));
+
+            const today = new Date();
+            if (today >= FREE_PERIOD_END_DATE) {
+                const updateModal = document.getElementById('update-modal');
+                updateModal.style.display = 'flex';
+                updateModal.style.zIndex = '9999';
+                document.getElementById('input-container').style.pointerEvents = 'none';
+                document.getElementById('input-container').style.opacity = '0.5';
+                document.getElementById('msg-input').disabled = true;
+                document.getElementById('msg-input').placeholder = "Tsy afaka mandefa hafatra intsony...";
+                const buttons = document.querySelectorAll('button');
+                buttons.forEach(btn => btn.disabled = true);
+            }
+
+            // --- FIX CLAVIER (WebView APK / Median.co) ---
+            const container = document.getElementById('input-container');
+            const footer = document.getElementById('disclaimer-text');
+            const msgInput = document.getElementById('msg-input');
+            const baseHeight = window.innerHeight;
+
+            function setLift(px) {
+                const t = px > 0 ? `translateY(-${px}px)` : 'translateY(0)';
+                container.style.transition = 'transform 0.15s ease-out';
+                footer.style.transition = 'transform 0.15s ease-out';
+                container.style.transform = t;
+                footer.style.transform = t;
+            }
+
+            function handleKeyboard() {
+                const vv = window.visualViewport;
+                if ((baseHeight - window.innerHeight) > 100) { setLift(0); return; }
+                const visualGap = vv ? Math.round(window.innerHeight - vv.height) : 0;
+                if (visualGap > 50) { setLift(visualGap); return; }
+                if (document.activeElement === msgInput) {
+                    setLift(Math.round(baseHeight * 0.4));
+                } else {
+                    setLift(0);
+                }
+            }
+
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', handleKeyboard);
+                window.visualViewport.addEventListener('scroll', handleKeyboard);
+            }
+            window.addEventListener('resize', handleKeyboard);
+            msgInput.addEventListener('focus', () => {
+                handleKeyboard();
+                setTimeout(handleKeyboard, 150);
+                setTimeout(handleKeyboard, 400);
+                setTimeout(handleKeyboard, 800);
+            });
+            msgInput.addEventListener('blur', () => {
+                setTimeout(handleKeyboard, 100);
+                setTimeout(handleKeyboard, 400);
+            });
+        };
+
+        function closeUpdateModal() {
+            document.getElementById('update-modal').style.display = 'none';
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'fr-FR';
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('msg-input').value = transcript;
+                    isRecording = false;
+                    document.getElementById('mic-btn').style.color = '#ffffff';
+                };
+
+                recognition.onerror = function(event) {
+                    isRecording = false;
+                    document.getElementById('mic-btn').style.color = '#ffffff';
+                    alert(translations[currentLang].micError);
+                };
+            }
+        }
+
+        function toggleVoiceInput() {
+            if (!recognition) {
+                alert(translations[currentLang].micError);
+                return;
+            }
+            if (isRecording) {
+                recognition.stop();
+                isRecording = false;
+                document.getElementById('mic-btn').style.color = '#ffffff';
+            } else {
+                recognition.start();
+                isRecording = true;
+                document.getElementById('mic-btn').style.color = '#800020';
+            }
+        }
+
+        // Fanavaozana sy fisehoan'ny Diamond eo amin'ny écran (misy fanohanana VIP)
+        function updateDiamondDisplay() {
+            const container = document.getElementById('diamond-container');
+            const isVip = localStorage.getItem('hevitraia_vip');
+            
+            if (container) {
+                if (isVip) {
+                    container.innerHTML = `💎 VIP (Tsy misy fetra)`;
+                } else {
+                    const today = new Date().toISOString().split('T')[0];
+                    let limitData = JSON.parse(localStorage.getItem('hevitraia_diamonds')) || { date: today, count: 25 };
+
+                    if (limitData.date !== today) {
+                        limitData = { date: today, count: 25 };
+                        localStorage.setItem('hevitraia_diamonds', JSON.stringify(limitData));
+                    }
+
+                    if (limitData.count <= 0) {
+                        container.innerHTML = `<span style="color:#ff0000;">💎 0 / 25 ${translations[currentLang].diamond || 'Diamond'}</span>`;
+                    } else {
+                        container.innerHTML = `
+                            <img src="https://i.gifer.com/origin/2d/2d8d6b1b4e2f3a4d5c6b7a8f9e0d1c2b.gif" alt="diamond" class="diamond-gif" onerror="this.style.display='none'"> 
+                            💎 <span id="diamond-count">${limitData.count}</span> / 25 ${translations[currentLang].diamond || 'Diamond'}
+                        `;
+                    }
+                }
+            }
+        }
+
+        // Fijerena sy fampihena ny Diamond isaky ny mandefa hafatra
+        function checkDiamondLimit() {
+            const isVip = localStorage.getItem('hevitraia_vip');
+            if (isVip) return true;
+
+            const today = new Date().toISOString().split('T')[0];
+            let limitData = JSON.parse(localStorage.getItem('hevitraia_diamonds')) || { date: today, count: 25 };
+
+            if (limitData.date !== today) {
+                limitData = { date: today, count: 25 };
+            }
+
+            if (limitData.count <= 0) {
+                alert(translations[currentLang].outOfDiamonds || "Efa lany ny Diamond anao androany. Miverena rahampitso!");
+                return false;
+            }
+
+            limitData.count--; // Mampihena iray eto
+            localStorage.setItem('hevitraia_diamonds', JSON.stringify(limitData));
+            updateDiamondDisplay();
+            return true;
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('user-email').value.trim();
+            if(email !== "") {
+                localStorage.setItem('hevitraia_user', email);
+                document.getElementById('user-label').innerText = email;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-container').style.display = 'flex';
+                loadHistory();
+            } else { alert("Azafady, soraty ny email-nao."); }
+        }
+
+        function skipLogin() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+            loadHistory();
+        }
+
+        function toggleMenu() {
+            const drawer = document.getElementById('drawer');
+            const overlay = document.getElementById('overlay');
+            drawer.classList.toggle('open');
+            overlay.style.display = drawer.classList.contains('open') ? 'block' : 'none';
+        }
+
+        function showAbout() { toggleMenu(); document.getElementById('aboutModal').style.display = 'flex'; }
+        function hideAbout() { document.getElementById('aboutModal').style.display = 'none'; }
+        
+        function handleKeyPress(e) { 
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault();
+                sendMessage(); 
+            } 
+        }
+
+        function changeLanguage() {
+            currentLang = document.getElementById('lang-select').value;
+            const t = translations[currentLang] || translations['mg'];
+
+            document.getElementById('drawer-title').innerText = t.menuTitle;
+            document.getElementById('profile-label').innerText = t.profileLabel;
+            document.getElementById('lang-label-text').innerText = t.langLabel;
+            document.getElementById('menu-new-chat').innerText = t.newChat;
+            document.getElementById('menu-about').innerText = t.about;
+            document.getElementById('welcome-msg').innerText = t.welcome;
+            document.getElementById('msg-input').placeholder = t.inputPlaceholder;
+            document.getElementById('disclaimer-text').innerText = t.disclaimer;
+            document.getElementById('about-title').innerText = t.aboutTitle;
+            document.getElementById('about-text-1').innerText = t.aboutText1;
+            document.getElementById('about-text-2').innerText = t.aboutText2;
+            document.getElementById('about-btn').innerText = t.aboutBtn;
+            document.getElementById('login-btn-txt').innerText = t.loginBtn;
+            document.getElementById('login-skip-txt').innerText = t.skipBtn;
+            document.getElementById('user-email').placeholder = t.emailPlaceholder;
+            document.getElementById('search-btn-text').innerText = t.searchBtn;
+            document.getElementById('update-title').innerText = t.updateTitle;
+            document.getElementById('update-text').innerText = t.updateText;
+
+            const arr = t.motivation;
+            const randomText = arr[Math.floor(Math.random() * arr.length)];
+            document.getElementById('motivation-display').innerText = `"${randomText}"`;
+
+            const userLabel = document.getElementById('user-label');
+            if (userLabel.innerText === "Vahiny" || userLabel.innerText === "Invité" || userLabel.innerText === "Guest" || userLabel.innerText === "Invitado") {
+                userLabel.innerText = currentLang === 'fr' ? "Invité" : currentLang === 'en' ? "Guest" : currentLang === 'es' ? "Invitado" : "Vahiny";
+            }
+            
+            if (recognition) {
+                recognition.lang = currentLang === 'fr' ? 'fr-FR' : currentLang === 'en' ? 'en-US' : currentLang === 'es' ? 'es-ES' : 'mg-MG';
+            }
+
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML = `
+                <div class="message ia" id="welcome-msg">${t.welcome}</div>
+                <div class="typing-indicator" id="typing-indicator"><span></span><span></span><span></span></div>
+            `;
+
+            updateDiamondDisplay(); 
+            toggleMenu();
+        }
+
+        function loadHistory() {
+            const user = localStorage.getItem('hevitraia_user') || 'vahiny';
+            const history = JSON.parse(localStorage.getItem(`hevitraia_chats_${user}`) || '[]');
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+
+            history.forEach(chat => {
+                const li = document.createElement('li');
+                li.className = 'menu-item';
+                li.innerHTML = `<svg class="menu-icon" viewBox="0 0 24 24"><path d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4C22,2.89 21.1,2 20,2Z"/></svg> <span>${chat.title}</span> <button class="delete-chat-btn" onclick="deleteChat(event, '${chat.id}')">⋮</button>`;
+                li.onclick = (e) => {
+                    if(e.target.tagName !== 'BUTTON') {
+                        loadChat(chat.id);
+                    }
+                };
+                historyList.appendChild(li);
+            });
+        }
+
+        function deleteChat(event, chatId) {
+            event.stopPropagation();
+            if (confirm("Hamafana ity resaka ity ve?")) {
+                const user = localStorage.getItem('hevitraia_user') || 'vahiny';
+                let history = JSON.parse(localStorage.getItem(`hevitraia_chats_${user}`) || '[]');
+                history = history.filter(c => c.id !== chatId);
+                localStorage.setItem(`hevitraia_chats_${user}`, JSON.stringify(history));
+                loadHistory();
+                if (currentChatId === chatId) newChat();
+            }
+        }
+
+        function loadChat(chatId) {
+            currentChatId = chatId;
+            const user = localStorage.getItem('hevitraia_user') || 'vahiny';
+            const history = JSON.parse(localStorage.getItem(`hevitraia_chats_${user}`) || '[]');
+            const chat = history.find(c => c.id === chatId);
+            
+            if (chat) {
+                const chatBox = document.getElementById('chat-box');
+                chatBox.innerHTML = `<div class="typing-indicator" id="typing-indicator"><span></span><span></span><span></span></div>`;
+                
+                chat.messages.forEach(msg => {
+                    if (msg.role === 'user') {
+                        appendUserMessage(msg.content, false);
+                    } else if (msg.role === 'assistant') {
+                        appendIAMessage(msg.content, false, msg.sources);
+                    }
+                });
+                
+                toggleMenu(); 
+            }
+        }
+
+        function newChat() {
+            currentChatId = null;
+            selectedFiles = [];
+            document.getElementById('preview-container').innerHTML = '';
+            const chatBox = document.getElementById('chat-box');
+            const t = translations[currentLang] || translations['mg'];
+
+            chatBox.innerHTML = `
+                <div class="message ia" id="welcome-msg">${t.welcome}</div>
+                <div class="typing-indicator" id="typing-indicator"><span></span><span></span><span></span></div>
+            `;
+            toggleMenu();
+        }
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files) {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        selectedFiles.push(e.target.result);
+                        
+                        const previewContainer = document.getElementById('preview-container');
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'preview-img';
+                        previewContainer.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+
+        // Fisoratana na Fanesorana VIP mivantana amin'ny Worker
+        async function activateVip(code) {
+            const input = document.getElementById('msg-input');
+            input.value = "";
+            autoResize(input);
+
+            if (code.toLowerCase() === 'off') {
+                localStorage.removeItem('hevitraia_vip');
+                appendIAMessage("VIP nofoanana.", false);
+                updateDiamondDisplay();
+                return;
+            }
+
+            try {
+                const r = await fetch(WORKER_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "vip", code: code })
+                });
+                const d = await r.json();
+                if (d.vip) {
+                    localStorage.setItem('hevitraia_vip', code);
+                    appendIAMessage("✅ VIP mavitrika. Tsy misy fetra intsony ny Diamond anao.", false);
+                    updateDiamondDisplay();
+                } else {
+                    localStorage.removeItem('hevitraia_vip');
+                    appendIAMessage("❌ Kaody diso.", false);
+                }
+            } catch (e) {
+                appendIAMessage("Miala tsiny, nisy olana teo amin'ny fifandraisana.", false);
+            }
+        }
+        function getOrCreateVisitorId() {
+            let vid = localStorage.getItem('hevitraia_visitor_id');
+            if (!vid) {
+                vid = 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+                localStorage.setItem('hevitraia_visitor_id', vid);
+            }
+            return vid;
+        }
+
+        async function saveMessageToFirestore(role, content) {
+            if (!window.hevitraDb || !window.firestoreOps) return;
+            try {
+                const db = window.hevitraDb;
+                const ops = window.firestoreOps;
+                const visitorId = getOrCreateVisitorId();
+                const userEmail = localStorage.getItem('hevitraia_user') || 'vahiny';
+                const userDocId = userEmail !== 'vahiny'
+                    ? userEmail.replace(/[^a-zA-Z0-9_-]/g, '_')
+                    : visitorId;
+                const chatId = currentChatId || ('chat_' + Date.now());
+
+                await ops.addDoc(ops.collection(db, "messages"), {
+                    userId: userDocId,
+                    userEmail: userEmail,
+                    chatId: chatId,
+                    role: role,
+                    content: content,
+                    lang: currentLang,
+                    searchMode: isSearchMode,
+                    createdAt: ops.serverTimestamp()
+                });
+
+                await ops.setDoc(
+                    ops.doc(db, "users", userDocId),
+                    {
+                        userId: userDocId,
+                        email: userEmail,
+                        lastActive: ops.serverTimestamp(),
+                        lastLang: currentLang,
+                        isVip: Boolean(localStorage.getItem('hevitraia_vip')),
+                        totalMessages: ops.increment(1)
+                    },
+                    { merge: true }
+                );
+            } catch (err) {
+                console.error("Firestore save error:", err);
+            }
+        }
+
+        async function getUserDataForRoast() {
+            const visitorId = getOrCreateVisitorId();
+            const userEmail = localStorage.getItem('hevitraia_user') || 'vahiny';
+            const userDocId = userEmail !== 'vahiny'
+                ? userEmail.replace(/[^a-zA-Z0-9_-]/g, '_')
+                : visitorId;
+            const localChats = JSON.parse(localStorage.getItem(`hevitraia_chats_${userEmail}`) || '[]');
+
+            let userPrompts = [];
+            localChats.forEach(chat => {
+                if (chat.messages) {
+                    chat.messages.forEach(m => {
+                        if (m.role === 'user' && m.content) {
+                            userPrompts.push(m.content);
+                        }
+                    });
+                }
+            });
+
+            if (window.hevitraDb && window.firestoreOps) {
+                try {
+                    const db = window.hevitraDb;
+                    const ops = window.firestoreOps;
+                    const q = ops.query(
+                        ops.collection(db, "messages"),
+                        ops.where("userId", "==", userDocId),
+                        ops.where("role", "==", "user"),
+                        ops.limit(20)
+                    );
+                    const snap = await ops.getDocs(q);
+                    snap.forEach(docSnap => {
+                        const d = docSnap.data();
+                        if (d.content) userPrompts.push(d.content);
+                    });
+                } catch (e) {
+                    console.error("Roast Firestore read error:", e);
+                }
+            }
+
+            return {
+                userId: userDocId,
+                email: userEmail,
+                lang: currentLang,
+                isVip: Boolean(localStorage.getItem('hevitraia_vip')),
+                pastUserMessages: [...new Set(userPrompts)].slice(-15)
+            };
+        }
+        async function sendMessage() {
+            const input = document.getElementById('msg-input');
+            const text = input.value.trim();
+            
+            if (text === "" && selectedFiles.length === 0) return;
+
+            // Jereo raha mandefa kaody VIP
+            if (text.toLowerCase().startsWith('/vip ')) {
+                const codeToTest = text.slice(5).trim();
+                activateVip(codeToTest);
+                return;
+            }
+
+            // --- ETO NO AMPISEHOANA ILAY FAMPIHENA DIAMOND ---
+            if (!checkDiamondLimit()) return;
+
+            if (!currentChatId) {
+                currentChatId = 'chat_' + Date.now();
+            }
+
+            document.getElementById('preview-container').innerHTML = '';
+            
+            let currentImageContents = [];
+            if (selectedFiles.length > 0) {
+                const chatBox = document.getElementById('chat-box');
+                const typing = document.getElementById('typing-indicator');
+                const div = document.createElement('div');
+                div.className = 'message user';
+                let htmlContent = '';
+                selectedFiles.forEach(fileData => {
+                    if (fileData.startsWith('data:image/')) {
+                        htmlContent += `<div class="image-wrapper"><img src="${fileData}" alt="Sary nalefa"></div>`;
+                        currentImageContents.push({ type: "image_url", image_url: { url: fileData } });
+                    } else {
+                        htmlContent += `<div><i>(Fichier nalefa)</i></div>`;
+                    }
+                });
+                div.innerHTML = htmlContent;
+                chatBox.insertBefore(div, typing);
+            }
+
+            if (text !== "") {
+                appendUserMessage(text);
+            }
+            
+            input.value = "";
+            autoResize(input);
+
+            const typing = document.getElementById('typing-indicator');
+            typing.style.display = 'block';
+            scrollToBottom();
+
+            try {
+                let historyMessages = [];
+                if (currentChatId) {
+                    const user = localStorage.getItem('hevitraia_user') || 'vahiny';
+                    const history = JSON.parse(localStorage.getItem(`hevitraia_chats_${user}`) || '[]');
+                    const chat = history.find(c => c.id === currentChatId);
+                    if (chat && chat.messages) {
+                        const recentMessages = chat.messages.slice(-10);
+                        recentMessages.forEach(m => {
+                            if (m.role === 'user' || m.role === 'assistant') {
+                                historyMessages.push({ role: m.role, content: m.content });
+                            }
+                        });
+                    }
+                }
+
+               // Mandefa fangatahana any amin'ny Cloudflare Worker (`hevitra-gate`)
+                const isRoast = /\broast\b/i.test(text);
+                const roastData = isRoast ? await getUserDataForRoast() : null;
+
+                const response = await fetch(WORKER_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        messages: historyMessages,
+                        text: text,
+                        imageContents: currentImageContents,
+                        isSearchMode: isSearchMode,
+                        vipKey: localStorage.getItem('hevitraia_vip') || "",
+                        userId: getOrCreateVisitorId(),
+                        isRoast: isRoast,
+                        roastData: roastData
+                    })
+                });
+
+                const data = await response.json();
+
+                typing.style.display = 'none';
+                selectedFiles = [];
+
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+
+                let botReply = data.reply;
+
+                if (botReply) {
+                    appendIAMessage(botReply, true, isSearchMode);
+                } else {
+                    appendIAMessage("Miala tsiny, nisy olana teo amin'ny fifandraisana.");
+                }
+
+            } catch (error) {
+                typing.style.display = 'none';
+                appendIAMessage("Miala tsiny, nisy olana kely teo amin'ny fifandraisana. Andramo indray azafady.");
+                console.error(error);
+            }
+        }
+
+        function appendUserMessage(msg, save = true) {
+            const chatBox = document.getElementById('chat-box');
+            const typing = document.getElementById('typing-indicator');
+            const div = document.createElement('div');
+            div.className = 'message user';
+            div.innerText = msg;
+            chatBox.insertBefore(div, typing);
+            scrollToBottom();
+            
+            if (save && currentChatId) {
+                const user = localStorage.getItem('hevitraia_user') || 'vahiny';
+                let history = JSON.parse(localStorage.getItem(`hevitraia_chats_${user}`) || '[]');
+                let chat = history.find(c => c.id === currentChatId);
+                if(!chat) {
+                    chat = { id: currentChatId, title: msg.substring(0, 30) + "...", messages: [] };
+                    history.push(chat);
+                }
+                chat.messages.push({ role: 'user', content: msg });
+                localStorage.setItem(`hevitraia_chats_${user}`, JSON.stringify(history));
+                saveMessageToFirestore('user', msg);
+                loadHistory();
+            }
+        }
+
+        function appendIAMessage(msg, save = true, isWebSearch = false) {
+            const chatBox = document.getElementById('chat-box');
+            const typing = document.getElementById('typing-indicator');
+            const div = document.createElement('div');
+            div.className = 'message ia';
+            
+            let formattedMsg = msg;
+            formattedMsg = formattedMsg.replace(/\*\*(.*?)\*\*/g, '<b style="color:#ff4d4d">$1</b>');
+            formattedMsg = formattedMsg.replace(/\*(.*?)\*/g, '<i>$1</i>');
+            formattedMsg = formattedMsg.replace(/^\s*-\s+/gm, '• ');
+            formattedMsg = formattedMsg.replace(/\n/g, '<br>');
+
+            const textNode = document.createElement('span');
+            textNode.className = 'bot-reply-text';
+            textNode.innerHTML = formattedMsg; 
+            
+            div.appendChild(textNode);
+
+            const actionDiv = document.createElement('div');
+            actionDiv.className = 'action-buttons';
+            actionDiv.innerHTML = `
+                <button class="action-btn" onclick="copyText(this)"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copie</button>
+                <button class="action-btn" onclick="speakText(this)"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg> Écouter</button>
+            `;
+            div.appendChild(actionDiv);
+
+            const sourceDiv = document.createElement('div');
+            sourceDiv.style.fontSize = '10px';
+            sourceDiv.style.color = '#aaaaaa';
+            sourceDiv.style.marginTop = '5px';
+            sourceDiv.style.textAlign = 'right';
+            sourceDiv.innerHTML = `<i>${translations[currentLang].source || 'Source'}: HevitraIA</i>`;
+            div.appendChild(sourceDiv);
+
+            chatBox.insertBefore(div, typing);
+            scrollToBottom();
+            
+            if (save && currentChatId) {
+                const user = localStorage.getItem('hevitraia_user') || 'vahiny';
+                let history = JSON.parse(localStorage.getItem(`hevitraia_chats_${user}`) || '[]');
+                let chat = history.find(c => c.id === currentChatId);
+                if(chat) {
+                    chat.messages.push({ role: 'assistant', content: msg, sources: ["web"] });
+                    localStorage.setItem(`hevitraia_chats_${user}`, JSON.stringify(history));
+                    saveMessageToFirestore('assistant', msg);
+                }
+            }
+        }
+
+        function copyText(btn) {
+            const textToCopy = btn.parentElement.parentElement.querySelector('.bot-reply-text').innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Vita!`;
+                setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+            });
+        }
+
+        function speakText(btn) {
+            const textToSpeak = btn.parentElement.parentElement.querySelector('.bot-reply-text').innerText;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = currentLang === 'fr' ? 'fr-FR' : currentLang === 'en' ? 'en-US' : currentLang === 'es' ? 'es-ES' : 'mg-MG';
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert(translations[currentLang].micError);
+            }
+        }
+
+        function openFilePicker() {
+            document.getElementById('file-picker').click();
+        }
+
+        function scrollToBottom() {
+            const chatBox = document.getElementById('chat-box');
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
